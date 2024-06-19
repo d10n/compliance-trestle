@@ -29,34 +29,34 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic.v1 import AnyUrl, EmailStr, Extra, Field, conint, constr, validator
+from pydantic import AnyUrl, EmailStr, Extra, Field, conint, constr, validator
 
 from trestle.core.base_model import OscalBaseModel
 from trestle.oscal import OSCAL_VERSION_REGEX, OSCAL_VERSION
 import trestle.oscal.common as common
+from pydantic import StringConstraints, ConfigDict
+from typing_extensions import Annotated
 
 
 class Control(OscalBaseModel):
     """
     A structured object representing a requirement or guideline, which when implemented will reduce an aspect of risk related to an information system and its information.
     """
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = Extra.forbid
-
-    id: constr(
-        regex=
+    id: Annotated[str, StringConstraints(
+        pattern=
         r'^[_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-\.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$'
-    ) = Field(
+    )] = Field(
         ...,
         description=
         'Identifies a control such that it can be referenced in the defining catalog and other OSCAL instances (e.g., profiles).',
         title='Control Identifier'
     )
-    class_: Optional[constr(
-        regex=
+    class_: Optional[Annotated[str, StringConstraints(
+        pattern=
         r'^[_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-\.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$'
-    )] = Field(
+    )]] = Field(
         None,
         alias='class',
         description='A textual label that provides a sub-type or characterization of the control.',
@@ -78,23 +78,21 @@ class Group(OscalBaseModel):
     """
     A group of controls, or of groups of controls.
     """
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = Extra.forbid
-
-    id: Optional[constr(
-        regex=
+    id: Optional[Annotated[str, StringConstraints(
+        pattern=
         r'^[_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-\.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$'
-    )] = Field(
+    )]] = Field(
         None,
         description=
         'Identifies the group for the purpose of cross-linking within the defining instance or from other instances that reference the catalog.',
         title='Group Identifier'
     )
-    class_: Optional[constr(
-        regex=
+    class_: Optional[Annotated[str, StringConstraints(
+        pattern=
         r'^[_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-\.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$'
-    )] = Field(
+    )]] = Field(
         None,
         alias='class',
         description='A textual label that provides a sub-type or characterization of the group.',
@@ -117,12 +115,10 @@ class Catalog(OscalBaseModel):
     """
     A structured, organized collection of control information.
     """
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = Extra.forbid
-
-    uuid: constr(regex=r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[45][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$'
-                 ) = Field(
+    uuid: Annotated[str, StringConstraints(pattern=r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[45][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$'
+                 )] = Field(
                      ...,
                      description='Provides a globally unique means to identify a given catalog instance.',
                      title='Catalog Universally Unique Identifier'

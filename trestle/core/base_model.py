@@ -33,9 +33,8 @@ from typing import Any, Dict, List, Optional, Type, cast
 
 import orjson
 
-from pydantic.v1 import Extra, Field, create_model
-from pydantic.v1.fields import ModelField
-from pydantic.v1.parse import load_file
+from pydantic import Extra, Field, create_model
+from pydantic_core import from_json
 
 from ruamel.yaml import YAML
 
@@ -45,6 +44,7 @@ from trestle.common.str_utils import AliasMode, classname_to_alias
 from trestle.common.type_utils import get_origin, is_collection_field_type
 from trestle.core.models.file_content_type import FileContentType
 from trestle.core.trestle_base_model import TrestleBaseModel
+from pydantic import ConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -82,21 +82,9 @@ class OscalBaseModel(TrestleBaseModel):
     1. Overrides default configuation of the pydantic library with behaviours required for trestle
     2. Provides utility functions for trestle which are specific to OSCAL and the naming schema associated with it.
     """
-
-    class Config:
-        """Overriding configuration class for pydantic base model, for use with OSCAL data classes."""
-
-        json_loads = orjson.loads
-        # TODO: json_dumps with orjson.dumps see #840
-
-        json_encoders = {datetime.datetime: lambda x: robust_datetime_serialization(x)}
-        allow_population_by_field_name = True
-
-        # Enforce strict schema
-        extra = Extra.forbid
-
-        # Validate on assignment of variables to ensure no escapes
-        validate_assignment = True
+    # TODO[pydantic]: The following keys were removed: `json_loads`, `json_encoders`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(json_loads=orjson.loads, json_encoders={datetime.datetime: lambda x: robust_datetime_serialization(x)}, populate_by_name=True, extra="forbid", validate_assignment=True)
 
     @classmethod
     def create_stripped_model_type(
@@ -169,10 +157,12 @@ class OscalBaseModel(TrestleBaseModel):
         """Get attribute value by field alias."""
         # TODO: can this be restricted beyond Any easily.
         attr_field = self.get_field_by_alias(attr_alias)
-        if isinstance(attr_field, ModelField):
-            return getattr(self, attr_field.name, None)
+        try:
+            rval = getattr(self, attr_field.name, None)
+        except Exception:
+            rval = None
+        return rval
 
-        return None
 
     def stripped_instance(
         self,
@@ -310,10 +300,11 @@ class OscalBaseModel(TrestleBaseModel):
                 obj = yaml.load(fh)
                 fh.close()
             elif content_type == FileContentType.JSON:
-                obj = load_file(
+                obj = from_json(
                     path,
                     json_loads=cls.__config__.json_loads,
                 )
+                cls.model_validate(obj)
         except Exception as e:
             raise err.TrestleError(f'Error loading file {path} {str(e)}')
         try:
@@ -384,13 +375,13 @@ class OscalBaseModel(TrestleBaseModel):
             self.__dict__[raw_field] = recast_object.__dict__[raw_field]
 
     @classmethod
-    def alias_to_field_map(cls) -> Dict[str, ModelField]:
+    def alias_to_field_map(cls) -> Dict[str, Any]:
         """Create a map from field alias to field.
 
         Returns:
             A dict which has key's of aliases and Fields as values.
         """
-        alias_to_field: Dict[str, ModelField] = {}
+        alias_to_field: Dict[str, Any] = {}
         for field in cls.__fields__.values():
             alias_to_field[field.alias] = field
 

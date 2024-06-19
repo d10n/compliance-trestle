@@ -29,7 +29,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic.v1 import AnyUrl, EmailStr, Extra, Field, conint, constr, validator
+from pydantic import AnyUrl, EmailStr, Extra, Field, conint, constr, validator
 
 from trestle.core.base_model import OscalBaseModel
 from trestle.oscal import OSCAL_VERSION_REGEX, OSCAL_VERSION
@@ -38,15 +38,15 @@ from trestle.oscal.common import RelatedObservation
 from trestle.oscal.common import SystemComponent
 from trestle.oscal.common import TaskValidValues
 from trestle.oscal.common import TokenDatatype
+from pydantic import StringConstraints, ConfigDict
+from typing_extensions import Annotated
 
 
 class TermsAndConditions(OscalBaseModel):
     """
     Used to define various terms and conditions under which an assessment, described by the plan, can be performed. Each child part defines a different type of term or condition.
     """
-
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     parts: Optional[List[common.AssessmentPart]] = Field(None)
 
@@ -55,9 +55,7 @@ class LocalDefinitions(OscalBaseModel):
     """
     Used to define data objects that are used in the assessment plan, that do not appear in the referenced SSP.
     """
-
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     components: Optional[List[common.SystemComponent]] = Field(None)
     inventory_items: Optional[List[common.InventoryItem]] = Field(None, alias='inventory-items')
@@ -71,13 +69,11 @@ class AssessmentPlan(OscalBaseModel):
     """
     An assessment plan, such as those provided by a FedRAMP assessor.
     """
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = Extra.forbid
-
-    uuid: constr(
-        regex=r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[45][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$'
-    ) = Field(
+    uuid: Annotated[str, StringConstraints(
+        pattern=r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[45][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$'
+    )] = Field(
         ...,
         description=
         'A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this assessment plan in this or other OSCAL instances. The locally defined UUID of the assessment plan can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.',

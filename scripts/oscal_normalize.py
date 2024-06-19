@@ -739,9 +739,6 @@ def write_oscal(classes, forward_refs, fstem):
 # For backward compatibility between 1.1.2 and 1.0.4, add back these classes
 # from common into the individual models via the bkwd_compat_1_0_4 method below.
 
-# The list of stems (dict keys) is also used by the pydantic_interface_v1 modification
-# method below, and thus the empty contents for some.
-
 additions = {
     'assessment_plan': [
         'from trestle.oscal.common import RelatedObservation',
@@ -788,23 +785,6 @@ def bkwd_compat_1_0_4(fstem):
                         line = f'{item}\n'
                         lines.append(line)
                         logger.debug(f'bkwd_compat_1_0_4: file {fstem}.py insert "{line.strip()}"')
-        with open(fname, 'w') as f:
-            for line in lines:
-                f.write(line)
-
-
-def pydantic_interface_v1(fstem):
-    """Patch for trestle use of pydantic v1 interface from pydantic v2 lib."""
-    # This function should be removed once the v2 interface is supported in trestle.
-    lines = []
-    if fstem in additions.keys():
-        fname = f'trestle/oscal/{fstem}.py'
-        with open(fname, 'r') as f:
-            for line in f:
-                if line.startswith('from pydantic'):
-                    line = line.replace('pydantic', 'pydantic.v1')
-                    logger.debug(f'pydantic_interface_v1: file {fstem}.py modify "{line.strip()}"')
-                lines.append(line)
         with open(fname, 'w') as f:
             for line in lines:
                 f.write(line)
@@ -881,7 +861,6 @@ def reorder_and_dump_as_python(file_classes):
         forward_refs = None
         write_oscal(ordered, forward_refs, item[0])
         bkwd_compat_1_0_4(item[0])
-        pydantic_interface_v1(item[0])
 
 
 def find_full_changes(file_classes):
